@@ -1,46 +1,28 @@
 pipeline{
     agent any
-
-    tools{
-        maven 'maven3'
+    tool{
+        maven 'maven-3.9.10'
     }
-
-    environment{
-        SONARQUBE_HOME = tool 'sonarqube-scanner' 
-    }
-
     stages{
-        stage ('clean workspace'){
-            steps{
-                cleanWs()
-            }
-        }
         stage('clone'){
             steps{
-                git 'https://github.com/VootlaSaiCharan/chatroom.git'
+                git 'https://github.com/lavanyavasudev/chatroom.git'
+            }  
+        }
+        stage('validate'){
+            steps{
+                sh 'mvn --version'
+                sh 'mvn clean validate'
             }
         }
         stage('compile'){
             steps{
-                sh 'mvn clean compile'
+                sh 'mvn compile'
             }
         }
-        stage('test'){
+        stage('trivy'){
             steps{
-                sh 'mvn test'
-            }
-        }
-        stage('trivy scan files'){
-            steps{
-                sh 'trivy fs --format table  -o fs.html .' 
-            }
-        }
-        stage('sonarqube analasis'){
-            steps{
-                withSonarQubeEnv('sonarqube-server'){
-                    sh ''' $SONARQUBE_HOME/bin/sonar-scanner -Dsonar.projectKey=chatroom \
-                        -Dsonar.projectName=chatroom -Dsonar.java.binaries=target  '''
-                }
+                sh 'trivy fs --format json --output trivy-fs-result.json .'
             }
         }
         stage('package'){
@@ -50,14 +32,7 @@ pipeline{
         }
         stage('deploy'){
             steps{
-                withMaven(globalMavenSettingsConfig: 'maven-setting', jdk: '', maven: 'maven3', mavenSettingsConfig: '', traceability: true) {
-                    sh 'mvn deploy'
-                }
-            }
-        }
-        stage('run the application'){
-            steps{
-                sh 'cd target && mv *.war /usr/local/tomcat/webapps/ROOT.war'
+                sh 'cp -r target/chatroom-0.0.1-SNAPSHOT.war /usr/local/tomcat/webapps/ROOT.war'
             }
         }
     }
