@@ -3,7 +3,9 @@ pipeline{
     tools{
         maven 'maven-3.9.10'
     } 
-    
+    environment {
+        SONARQUBE_HOME = tool 'sonarqube-scanner' 
+    }
     stages{
         stage('clone'){
             steps{
