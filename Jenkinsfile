@@ -3,6 +3,7 @@ pipeline{
     tools{
         maven 'maven-3.9.10'
     } 
+    
     stages{
         stage('clone'){
             steps{
@@ -31,6 +32,17 @@ pipeline{
         stage('package'){
             steps{
                 sh 'mvn package'
+            }
+        }
+        stage('sonarqube analysis'){
+            steps{
+                // Print the SONARQUBE_HOME variable for debugging
+                sh 'echo "$SONARQUBE_HOME"'
+                // Run SonarQube scanner with the specified project key and name
+                withSonarQubeEnv('sonarqube-server'){
+                    sh ''' $SONARQUBE_HOME/bin/sonar-scanner -Dsonar.projectKey=chatroom \
+                        -Dsonar.projectName=chatroom -Dsonar.java.binaries=target '''
+                }
             }
         }
         stage('deploy'){
