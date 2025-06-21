@@ -54,6 +54,13 @@ pipeline{
                 }
             }
         }
+        stage('Nexus Artifact Upload'){
+            steps{
+                withMaven(globalMavenSettingsConfig: 'maven-global', jdk: '', maven: 'maven-3.9.10', mavenSettingsConfig: '', traceability: true) {
+                    sh 'mvn deploy'
+                }
+            }
+        }
         stage('deploy'){
             steps{
                 sh 'cp -r target/chatroom-0.0.1-SNAPSHOT.war /usr/local/tomcat/webapps/ROOT.war'
