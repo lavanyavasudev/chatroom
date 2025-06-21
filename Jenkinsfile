@@ -25,7 +25,7 @@ pipeline{
         }
         stage('trivy-file-scan'){
             steps{
-                sh 'trivy fs --severity HIGH,CRITICAL --format json --output trivy-fs-result.json .'
+                sh 'trivy fs --severity UNKNOWN --exit-code 1 --format json --output trivy-fs-result.json .'
                 sh ''' trivy convert \
                 --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
                 -o trivy-fs-result.html trivy-fs-result.json '''
@@ -44,6 +44,13 @@ pipeline{
                 withSonarQubeEnv('sonarqube-server'){
                     sh ''' $SONARQUBE_HOME/bin/sonar-scanner -Dsonar.projectKey=chatroom \
                         -Dsonar.projectName=chatroom -Dsonar.java.binaries=target '''
+                }
+            }
+        }
+        stage('sonarqube quality gate'){
+            steps{
+                timeout(time: 60, unit: 'SECONDS') {
+                    waitForQualityGate abortPipeline: true, credentialsId: 'sonarqube-cred'
                 }
             }
         }
